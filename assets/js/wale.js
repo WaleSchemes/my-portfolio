@@ -92,3 +92,97 @@ document.getElementById("backToTopBtn").addEventListener("click", function() {
     document.body.scrollTop = 0; // For Safari
     document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE, and Opera
 });
+
+// ---skill bar----//
+
+window.addEventListener('scroll', function() {
+    const skillsSection = document.querySelector('.skills-section');
+    const sectionPosition = skillsSection.getBoundingClientRect().top;
+    const screenPosition = window.innerHeight;
+
+    if (sectionPosition < screenPosition) {
+        const skillBars = document.querySelectorAll('.skill-bar');
+        skillBars.forEach(bar => {
+            const fill = bar.querySelector('.fill');
+            const percentage = bar.getAttribute('data-percent');
+            fill.style.width = percentage + '%';
+        });
+    }
+});
+
+
+// ---portfolio---//
+
+const carouselWrapper = document.querySelector('.carousel-wrapper');
+const carouselSlides = document.querySelectorAll('.carousel-slide');
+const sliderBar = document.querySelector('.carousel-slider-bar');
+
+let isDragging = false;
+let startPos = 0;
+let currentTranslate = 0;
+let prevTranslate = 0;
+let animationID;
+let currentIndex = 0;
+
+carouselSlides.forEach((slide, index) => {
+    const image = slide.querySelector('img');
+    image.addEventListener('dragstart', (e) => e.preventDefault());
+
+    // Touch events
+    image.addEventListener('touchstart', touchStart(index));
+    image.addEventListener('touchend', touchEnd);
+    image.addEventListener('touchmove', touchMove);
+
+    // Mouse events
+    image.addEventListener('mousedown', touchStart(index));
+    image.addEventListener('mouseup', touchEnd);
+    image.addEventListener('mouseleave', touchEnd);
+    image.addEventListener('mousemove', touchMove);
+});
+
+function touchStart(index) {
+    return function (event) {
+        currentIndex = index;
+        startPos = getPositionX(event);
+        isDragging = true;
+        animationID = requestAnimationFrame(animation);
+    };
+}
+
+function touchEnd() {
+    isDragging = false;
+    cancelAnimationFrame(animationID);
+
+    const movedBy = currentTranslate - prevTranslate;
+
+    if (movedBy < -100 && currentIndex < carouselSlides.length - 1) currentIndex += 1;
+    if (movedBy > 100 && currentIndex > 0) currentIndex -= 1;
+
+    setPositionByIndex();
+}
+
+function touchMove(event) {
+    if (isDragging) {
+        const currentPosition = getPositionX(event);
+        currentTranslate = prevTranslate + currentPosition - startPos;
+    }
+}
+
+function getPositionX(event) {
+    return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+}
+
+function animation() {
+    setSliderPosition();
+    if (isDragging) requestAnimationFrame(animation);
+}
+
+function setSliderPosition() {
+    carouselWrapper.style.transform = `translateX(${currentTranslate}px)`;
+}
+
+function setPositionByIndex() {
+    currentTranslate = currentIndex * -carouselSlides[0].clientWidth;
+    prevTranslate = currentTranslate;
+    setSliderPosition();
+}
